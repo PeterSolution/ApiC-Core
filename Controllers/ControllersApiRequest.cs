@@ -10,18 +10,7 @@ namespace RestApi.Controllers
     public class ControllersApiRequest : Controller
     {
         DbContextClass dbContextClass;
-        public DbModel modeltransform(ModelForUser modeluser)
-        {
-            int a = lastId().Id;
-
-            DbModel model = new DbModel();
-            model.id = a;
-            model.question = modeluser.question;
-            model.value = modeluser.value;
-            model.answer = modeluser.answer;
-
-            return model;
-        }
+        
         public ControllersApiRequest(DbContextClass dbContextClasss)
         {
             dbContextClass = dbContextClasss ?? throw new ArgumentNullException(nameof(dbContextClass));
@@ -53,8 +42,8 @@ namespace RestApi.Controllers
         [HttpPost]
         public async Task<ActionResult<DbModel>> Post(ModelForUser dbModel)
         {
-
-            DbModel helpingmodel = modeltransform(dbModel);
+            Function helpingfunction = new Function(dbContextClass);
+            DbModel helpingmodel = Function.modeltransform(dbModel);
             
 
 
@@ -63,14 +52,7 @@ namespace RestApi.Controllers
             return CreatedAtAction(nameof(Getdbmodel), helpingmodel);
         }
 
-        public async Task<ActionResult<int>> lastId()
-        {
-            var lastId = await dbContextClass.DbModels
-            .OrderByDescending(m => m.id)
-            .Select(m => m.id)
-            .FirstOrDefaultAsync();
-            return lastId;
-        }
+        
         [HttpPut("{id}")]
         public async Task<IActionResult> Change(int id, DbModel dbModel)
         {
