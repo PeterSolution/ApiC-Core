@@ -11,5 +11,16 @@ namespace RestApi.Models
         public string question { get; set; }
         public string answer { get; set; }
         public double value { get; set; }
+        public DbModel modeltransform(ModelForUser model)
+        {
+            return new DbModel
+            {
+                question=model.question,
+                answer=model.answer,
+                value=model.value
+            };
+        }
+
+
     }
 }

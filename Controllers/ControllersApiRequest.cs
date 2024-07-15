@@ -10,7 +10,7 @@ namespace RestApi.Controllers
     public class ControllersApiRequest : Controller
     {
         DbContextClass dbContextClass;
-        
+
         public ControllersApiRequest(DbContextClass dbContextClasss)
         {
             dbContextClass = dbContextClasss ?? throw new ArgumentNullException(nameof(dbContextClass));
@@ -27,9 +27,9 @@ namespace RestApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<DbModel>> Getdbmodel(int id)
         {
-            
+
             DbModel dbmodel = await dbContextClass.DbModels.FindAsync(id);
-            if(dbmodel == null)
+            if (dbmodel == null)
             {
                 return NotFound();
             }
@@ -38,35 +38,51 @@ namespace RestApi.Controllers
                 return dbmodel;
             }
         }
-        
+
         [HttpPost]
         public async Task<ActionResult<DbModel>> Post(ModelForUser dbModel)
         {
-            Function helpingfunction = new Function(dbContextClass);
-            DbModel helpingmodel = Function.modeltransform(dbModel);
-            
+            /*Function helpingfunction = new Function(dbContextClass);
+            DbModel helpingmodel = helpingfunction.modeltransform(dbModel);
+
+            dbContextClass.DbModels.Add(helpingmodel);
+            dbContextClass.SaveChanges();
+            return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.Id }, helpingmodel);*/
+
+            var helpingmodel = new DbModel
+            {
+                question = dbModel.question,
+                answer = dbModel.answer,
+                value = dbModel.value
+            };
+
+
 
 
             dbContextClass.DbModels.Add(helpingmodel);
             dbContextClass.SaveChanges();
-            return CreatedAtAction(nameof(Getdbmodel), helpingmodel);
+            return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.id }, helpingmodel);
         }
 
-        
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> Change(int id, DbModel dbModel)
+        public async Task<IActionResult> Change(int id, ModelForUser model)
         {
-            if (id != dbModel.id)
+
+
+            if (dbContextClass.DbModels.Find(id) == null)
             {
                 return Conflict("Bad id");
             }
-            else 
+            else
             {
+                var dbModel = await dbContextClass.DbModels.FindAsync(id);
+                dbModel.question = model.question;
+                dbModel.answer = model.answer;
+                dbModel.value = model.value;
 
-                if (dbModel == null)
-                {
-                    return NotFound();
-                }
+
+
 
                 dbContextClass.Entry(dbModel).State = EntityState.Modified;
 
@@ -74,100 +90,32 @@ namespace RestApi.Controllers
                 {
                     await dbContextClass.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch
                 {
-                    if (!CheckModelExists(id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+
+                    return Problem();
                 }
 
                 return NoContent();
             }
         }
-        private bool CheckModelExists(int id)
-        {
-            return dbContextClass.DbModels.Any(e => e.id == id);
-        }
 
-        /*// GET: ControllersApiRequest
-        public ActionResult Index()
+        [HttpDelete]
+        public async Task<IActionResult> DeleteModel(int id)
         {
-            return View();
-        }
-
-        // GET: ControllersApiRequest/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        // GET: ControllersApiRequest/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: ControllersApiRequest/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
+            var dbModel = await dbContextClass.DbModels.FindAsync(id);
+            if (dbModel != null)
             {
-                return RedirectToAction(nameof(Index));
+                dbContextClass.DbModels.Remove(dbModel);
+                dbContextClass.SaveChanges();
+                return Ok();
             }
-            catch
+            else
             {
-                return View();
+                return NotFound();
             }
         }
 
-        // GET: ControllersApiRequest/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: ControllersApiRequest/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: ControllersApiRequest/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: ControllersApiRequest/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }*/
 
     }
 }
