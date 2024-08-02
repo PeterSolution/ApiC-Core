@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestApi.Data;
@@ -38,31 +39,92 @@ namespace RestApi.Controllers
                 return dbmodel;
             }
         }
-
         [HttpPost]
+        public async Task<ActionResult<DbModel>> Post([FromBody] ModelForUser dbModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            using (var transaction = await dbContextClass.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var helpingmodel = new DbModel
+                    {
+                        question = dbModel.question,
+                        answer = dbModel.answer,
+                        value = dbModel.value
+                    };
+                    dbContextClass.DbModels.Add(helpingmodel);
+                    await dbContextClass.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                    return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.id }, helpingmodel);
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(500, $"An error occurred: {ex.Message}");
+                }
+            }
+        }
+        /*[HttpPost]
         public async Task<ActionResult<DbModel>> Post(ModelForUser dbModel)
         {
-            /*Function helpingfunction = new Function(dbContextClass);
+            Function helpingfunction = new Function(dbContextClass);
             DbModel helpingmodel = helpingfunction.modeltransform(dbModel);
 
             dbContextClass.DbModels.Add(helpingmodel);
             dbContextClass.SaveChanges();
-            return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.Id }, helpingmodel);*/
-
-            var helpingmodel = new DbModel
+            return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.Id }, helpingmodel);
+            using (var transaction = await dbContextClass.Database.BeginTransactionAsync())
             {
-                question = dbModel.question,
-                answer = dbModel.answer,
-                value = dbModel.value
-            };
 
+                var helpingmodel = new DbModel
+                {
+                    question = dbModel.question,
+                    answer = dbModel.answer,
+                    value = dbModel.value
+                };
 
+                dbContextClass.DbModels.Add(helpingmodel);
+                await dbContextClass.SaveChangesAsync();
+                
+                transaction.Commit();
+                return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.id }, helpingmodel);
 
-
-            dbContextClass.DbModels.Add(helpingmodel);
-            dbContextClass.SaveChanges();
-            return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.id }, helpingmodel);
+            }
         }
+        [HttpPost]
+        public async Task<ActionResult<DbModel>> Post([FromBody] ModelForUser dbModel)
+        {
+            
+
+            using (var transaction = await dbContextClass.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var helpingmodel = new DbModel
+                    {
+                        question = dbModel.question,
+                        answer = dbModel.answer,
+                        value = dbModel.value
+                    };
+                    dbContextClass.DbModels.Add(helpingmodel);
+                    await dbContextClass.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                    return CreatedAtAction(nameof(Getdbmodel), new { id = helpingmodel.id }, helpingmodel);
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return StatusCode(500, $"An error occurred: {ex.Message}");
+                }
+            }
+        }*/
 
 
         [HttpPut("{id}")]
@@ -96,7 +158,7 @@ namespace RestApi.Controllers
                     return Problem();
                 }
 
-                return NoContent();
+                return Ok();
             }
         }
 
